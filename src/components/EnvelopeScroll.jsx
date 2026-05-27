@@ -85,23 +85,6 @@ export default function EnvelopeScroll() {
 
   return (
     <div className="scroll-timeline-container" ref={containerRef}>
-      {/* Temporary Debug Progress Overlay */}
-      <div style={{
-        position: 'fixed',
-        top: '12px',
-        left: '12px',
-        zIndex: 9999999,
-        background: 'rgba(0, 0, 0, 0.85)',
-        color: '#fff',
-        padding: '6px 12px',
-        borderRadius: '4px',
-        fontFamily: 'monospace',
-        fontSize: '11px',
-        pointerEvents: 'none',
-        border: '1px solid rgba(255,255,255,0.15)'
-      }}>
-        Scroll Progress: {scrollProgress.toFixed(4)}
-      </div>
 
       <Header isDarkMode={isDarkMode} scrollProgress={scrollProgress} />
 

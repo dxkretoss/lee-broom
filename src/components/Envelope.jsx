@@ -43,12 +43,12 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
   } else if (scrollProgress <= 0.82) {
     // Stage 2 (0.50 → 0.82): card slides out, envelope retreats further & fades
     const t = mapRange(scrollProgress, 0.50, 0.82, 0, 1);
-    camY     = 130 + t * 90;      // 130 → 220px
-    camScale  = 1 - t * 0.09;    // 1.0 → 0.91
+    camY = 130 + t * 90;      // 130 → 220px
+    camScale = 1 - t * 0.09;    // 1.0 → 0.91
     camOpacity = 1 - t * 0.40;   // 1.0 → 0.60
   } else {
-    camY       = 220;
-    camScale   = 0.91;
+    camY = 220;
+    camScale = 0.91;
     camOpacity = 0.60;
   }
 
@@ -57,7 +57,7 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
       className="envelope-container"
       style={{
         transform: `translateY(${camY}px) scale(${camScale})`,
-        opacity: camOpacity,
+        '--envelope-opacity': camOpacity,
       }}
     >
       <div className="envelope-wrapper">
@@ -140,6 +140,7 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           z-index: 1;
           overflow: hidden;
           box-shadow: inset 0 0 50px rgba(0,0,0,0.12);
+          opacity: var(--envelope-opacity, 1);
         }
 
         .inner-shadow-overlay {
@@ -158,6 +159,7 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           transform-origin: top center;
           transform-style: preserve-3d;
           /* NO transition — scroll scrubbed */
+          opacity: var(--envelope-opacity, 1);
         }
 
         .top-flap-wrapper.in-front-of-card { z-index: 6; }
@@ -210,6 +212,7 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           inset: 0;
           pointer-events: none;
           z-index: 4;
+          opacity: var(--envelope-opacity, 1);
         }
 
         .left-flap {

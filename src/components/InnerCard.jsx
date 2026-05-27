@@ -13,6 +13,8 @@ export default function InnerCard({ scrollProgress = 0 }) {
   const [email, setEmail] = useState('charles@design.com');
   const [region, setRegion] = useState('LONDON');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
+  const [password, setPassword] = useState('');
 
   // Guarantee scrollProgress is a valid number
   const progress = typeof scrollProgress === 'number' && !isNaN(scrollProgress) ? scrollProgress : 0;
@@ -21,40 +23,38 @@ export default function InnerCard({ scrollProgress = 0 }) {
    * CARD ANIMATION STAGES:
    *
    *  0.00 → 0.50  Card sits inside envelope, static (lid is rotating open - finishes at 200vh)
-   *  0.50 → 0.82  Card slides UP out of envelope (flap is fully open)
-   *  0.82 → 1.00  Card zooms toward viewer & portal reveals
+   *  0.50 → 0.70  Card slides UP out of envelope (flap is fully open)
+   *  0.70 → 1.00  Card zooms toward viewer & portal reveals
    */
 
-  // Card slide (0.50 → 0.82): starts only after flap is fully open
-  const cardT = clamp((progress - 0.50) / (0.82 - 0.50), 0, 1);
-  const cardTranslateY = 220 - cardT * 590;  // +220 tucked deep inside → -370 fully emerged
+  // Card slide (0.50 → 0.70): starts only after flap is fully open
+  const cardT = clamp((progress - 0.50) / (0.70 - 0.50), 0, 1);
+  const cardTranslateY = -cardT * 370;  // 0 nested naturally inside pocket → -370 fully emerged
   const cardScale = 0.96 + cardT * 0.04;    // 0.96 → 1.00
   let cardZIndex = cardT > 0 ? 3 : 2;
 
-  // Card zoom-in (0.82 → 1.00)
+  // Card zoom-in (0.70 → 1.00)
   let zoomScale = 1;
   let zoomTranslateY = 0;
   let showPortal = false;
 
-  if (progress > 0.82) {
-    const zoomT = clamp((progress - 0.82) / (1.00 - 0.82), 0, 1);
+  if (progress > 0.70) {
+    const zoomT = clamp((progress - 0.70) / (1.00 - 0.70), 0, 1);
     zoomScale = 1 + zoomT * 0.22;
-    zoomTranslateY = zoomT * 90;
+    zoomTranslateY = zoomT * 150; // Center the card perfectly in the viewport by countering envelope offset
     showPortal = zoomT > 0.18;
     cardZIndex = 20;
   }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !email) return;
+    if (activeTab === 'login' && !email) return;
+    if (activeTab === 'register' && (!name || !email)) return;
     setIsLoading(true);
     setTimeout(() => { setIsLoading(false); setFormSubmitted(true); }, 1200);
   };
 
-  // Dynamically clip the bottom of the card so it never sticks out below the bottom of the envelope
   const totalTranslateY = cardTranslateY + zoomTranslateY;
-  const clipBottomY = 470 - 15 - totalTranslateY;
-  const clipPathString = `polygon(0 0, 100% 0, 100% ${clipBottomY}px, 0 ${clipBottomY}px)`;
 
   return (
     <div
@@ -62,7 +62,7 @@ export default function InnerCard({ scrollProgress = 0 }) {
       style={{
         transform: `translateY(${totalTranslateY}px) scale(${cardScale * zoomScale})`,
         zIndex: cardZIndex,
-        clipPath: clipPathString,
+        clipPath: 'none',
         /* NO transform transition — scroll scrubbed */
       }}
     >
@@ -93,37 +93,51 @@ export default function InnerCard({ scrollProgress = 0 }) {
             <form onSubmit={handleSubmit} className="portal-form">
               <div className="portal-header animate-item">
                 <div className="mini-crest">LB</div>
-                <h3 className="luxury-heading portal-title">Welcome {name || 'Guest'}</h3>
-                <p className="portal-subtitle">Please complete your registration to activate access.</p>
+                <div className="portal-tabs">
+                  <button type="button" className={`tab-btn luxury-text ${activeTab === 'login' ? 'active' : ''}`} onClick={() => setActiveTab('login')}>Sign In</button>
+                  <button type="button" className={`tab-btn luxury-text ${activeTab === 'register' ? 'active' : ''}`} onClick={() => setActiveTab('register')}>Register</button>
+                </div>
               </div>
 
               <div className="form-fields">
-                <div className="input-group animate-item">
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder=" " id="fullname" />
-                  <label htmlFor="fullname" className="luxury-text">Full Name</label>
-                  <div className="input-border-glow" />
-                </div>
+                {activeTab === 'register' && (
+                  <div className="input-group animate-item">
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder=" " id="fullname" />
+                    <label htmlFor="fullname" className="luxury-text">Full Name</label>
+                    <div className="input-border-glow" />
+                  </div>
+                )}
+
                 <div className="input-group animate-item">
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder=" " id="email" />
                   <label htmlFor="email" className="luxury-text">Email Address</label>
                   <div className="input-border-glow" />
                 </div>
-                <div className="region-selector animate-item">
-                  <span className="selector-label luxury-text">Primary Showroom / Region</span>
-                  <div className="region-buttons">
-                    {['LONDON', 'NEW YORK', 'PARIS', 'TOKYO'].map(r => (
-                      <button key={r} type="button"
-                        className={`region-btn luxury-text ${region === r ? 'active' : ''}`}
-                        onClick={() => setRegion(r)}>{r}</button>
-                    ))}
-                  </div>
+
+                <div className="input-group animate-item">
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder=" " id="password" />
+                  <label htmlFor="password" className="luxury-text">Password</label>
+                  <div className="input-border-glow" />
                 </div>
+
+                {activeTab === 'register' && (
+                  <div className="region-selector animate-item">
+                    <span className="selector-label luxury-text">Primary Showroom / Region</span>
+                    <div className="region-buttons">
+                      {['LONDON', 'NEW YORK', 'PARIS', 'TOKYO'].map(r => (
+                        <button key={r} type="button"
+                          className={`region-btn luxury-text ${region === r ? 'active' : ''}`}
+                          onClick={() => setRegion(r)}>{r}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className={`submit-btn luxury-text animate-item ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
                 {isLoading
                   ? <span>Verifying Credentials...</span>
-                  : <><span>Request Member Access</span><ArrowRight size={14} className="btn-icon" /></>}
+                  : <><span>{activeTab === 'login' ? 'Sign In' : 'Register Account'}</span><ArrowRight size={14} className="btn-icon" /></>}
               </button>
             </form>
           ) : (
@@ -178,6 +192,8 @@ export default function InnerCard({ scrollProgress = 0 }) {
         }
 
         .inner-card-container.active-portal {
+          z-index: 20 !important;
+          background-color: #ffffff !important;
           box-shadow:
             0 30px 70px rgba(0,0,0,0.42),
             0 0 45px rgba(195,166,125,0.12),
@@ -278,6 +294,62 @@ export default function InnerCard({ scrollProgress = 0 }) {
         }
 
         /* ── Portal view ── */
+        .portal-header {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 15px;
+          width: 100%;
+        }
+
+        .portal-tabs {
+          display: flex;
+          gap: 20px;
+          margin-top: 8px;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+          padding-bottom: 8px;
+          width: 100%;
+          justify-content: center;
+        }
+
+        .tab-btn {
+          background: none !important;
+          border: none !important;
+          color: rgba(34,31,29,0.4) !important;
+          font-size: 11px;
+          font-weight: 500;
+          cursor: pointer;
+          padding: 4px 12px;
+          position: relative;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+        }
+
+        .tab-btn::after {
+          content: '';
+          position: absolute;
+          bottom: -9px;
+          left: 0;
+          width: 100%;
+          height: 1.5px;
+          background-color: var(--gold-primary);
+          transform: scaleX(0);
+          transition: transform 0.3s ease;
+        }
+
+        .tab-btn.active {
+          color: var(--text-dark) !important;
+          font-weight: 600;
+        }
+
+        .tab-btn.active::after {
+          transform: scaleX(1);
+        }
+
+        .tab-btn:hover {
+          color: var(--text-dark) !important;
+        }
+
         .portal-view {
           position: absolute;
           inset: 0;
@@ -289,7 +361,7 @@ export default function InnerCard({ scrollProgress = 0 }) {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          background: radial-gradient(circle at 50% 50%, #ffffff 0%, #faf8f5 100%);
+          background: #ffffff !important;
         }
 
         .portal-view.fade-in {
