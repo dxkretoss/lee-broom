@@ -9,7 +9,7 @@ export default function EnvelopeScroll() {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   // Dark mode triggers at 0.82 — when the card is zooming in
-  const isDarkMode = scrollProgress > 0.82;
+  const isDarkMode = scrollProgress > 0.75;
 
   useEffect(() => {
     document.body.classList.toggle('dark-mode', isDarkMode);
