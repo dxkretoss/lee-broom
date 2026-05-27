@@ -25,8 +25,8 @@ export default function Header({ isDarkMode, scrollProgress }) {
         {/* Right Navigation */}
         <nav className="nav-group right-nav">
           <div className="members-wrapper">
-            <a 
-              href="#members" 
+            <a
+              href="#members"
               className={`nav-link luxury-text active-member-link ${showMemberDetails ? 'show-details' : ''}`}
             >
               <span className="link-default">Members</span>
@@ -37,7 +37,7 @@ export default function Header({ isDarkMode, scrollProgress }) {
           <a href="#contact" className="nav-link luxury-text">Contact</a>
         </nav>
       </div>
-      
+
       <style>{`
         .luxury-header {
           position: fixed;
@@ -100,7 +100,6 @@ export default function Header({ isDarkMode, scrollProgress }) {
           font-weight: 400;
           letter-spacing: 0.18em;
           position: relative;
-          padding: 4px 0;
         }
 
         .luxury-header.dark .nav-link {

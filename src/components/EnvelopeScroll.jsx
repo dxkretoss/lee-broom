@@ -132,7 +132,7 @@ export default function EnvelopeScroll() {
 
         .scroll-instruction {
           position: absolute;
-          bottom: 40px;
+          bottom: 80px;
           left: 50%;
           display: flex;
           flex-direction: column;
