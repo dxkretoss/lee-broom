@@ -7,29 +7,6 @@ import { ChevronDown } from 'lucide-react';
 export default function EnvelopeScroll() {
   const containerRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const rafRef = useRef(null);
-
-  // Pure rAF scroll tracker — no lerp, no delay, 1:1 with scroll bar
-  const handleScroll = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      if (!containerRef.current) return;
-      const container = containerRef.current;
-      const scrollTrackHeight = container.scrollHeight - window.innerHeight;
-      const scrolled = Math.max(0, window.scrollY - container.offsetTop);
-      const progress = Math.min(1, scrolled / scrollTrackHeight);
-      setScrollProgress(progress);
-    });
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [handleScroll]);
 
   // Dark mode triggers at 0.82 — when the card is zooming in
   const isDarkMode = scrollProgress > 0.82;
@@ -37,6 +14,47 @@ export default function EnvelopeScroll() {
   useEffect(() => {
     document.body.classList.toggle('dark-mode', isDarkMode);
   }, [isDarkMode]);
+
+  useEffect(() => {
+    let targetProgress = 0;
+    let currentProgress = 0;
+    let rafId = null;
+
+    // Smooth luxury physics lerp (0.06) for premium high-inertia motion
+    const tick = () => {
+      const diff = targetProgress - currentProgress;
+      if (Math.abs(diff) < 0.0001) {
+        currentProgress = targetProgress;
+        setScrollProgress(targetProgress);
+        rafId = null;
+      } else {
+        currentProgress += diff * 0.06;
+        setScrollProgress(currentProgress);
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const container = containerRef.current;
+      const scrollTrackHeight = container.scrollHeight - window.innerHeight;
+      const scrolled = Math.max(0, window.scrollY - container.offsetTop);
+      const progress = scrollTrackHeight > 0 ? Math.min(1, scrolled / scrollTrackHeight) : 0;
+
+      targetProgress = progress;
+      if (!rafId) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   // Click seal → smooth scroll to start of animation
   const handleSealClick = () => {
@@ -67,6 +85,24 @@ export default function EnvelopeScroll() {
 
   return (
     <div className="scroll-timeline-container" ref={containerRef}>
+      {/* Temporary Debug Progress Overlay */}
+      <div style={{
+        position: 'fixed',
+        top: '12px',
+        left: '12px',
+        zIndex: 9999999,
+        background: 'rgba(0, 0, 0, 0.85)',
+        color: '#fff',
+        padding: '6px 12px',
+        borderRadius: '4px',
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        pointerEvents: 'none',
+        border: '1px solid rgba(255,255,255,0.15)'
+      }}>
+        Scroll Progress: {scrollProgress.toFixed(4)}
+      </div>
+
       <Header isDarkMode={isDarkMode} scrollProgress={scrollProgress} />
 
       <div className="sticky-viewport">

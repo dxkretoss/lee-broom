@@ -7,24 +7,27 @@ const mapRange = (val, inMin, inMax, outMin, outMax) => {
   return outMin + t * (outMax - outMin);
 };
 
-export default function InnerCard({ scrollProgress }) {
+export default function InnerCard({ scrollProgress = 0 }) {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [name, setName] = useState('Charles');
   const [email, setEmail] = useState('charles@design.com');
   const [region, setRegion] = useState('LONDON');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Guarantee scrollProgress is a valid number
+  const progress = typeof scrollProgress === 'number' && !isNaN(scrollProgress) ? scrollProgress : 0;
+
   /**
    * CARD ANIMATION STAGES:
    *
-   *  0.00 → 0.30  Card sits inside envelope, static (lid is rotating open)
-   *  0.30 → 0.82  Card slides UP out of envelope (flap has passed -90° so card is in front)
+   *  0.00 → 0.50  Card sits inside envelope, static (lid is rotating open - finishes at 200vh)
+   *  0.50 → 0.82  Card slides UP out of envelope (flap is fully open)
    *  0.82 → 1.00  Card zooms toward viewer & portal reveals
    */
 
-  // Card slide (0.30 → 0.82): starts only after flap passes -90°
-  const cardT = clamp((scrollProgress - 0.30) / (0.82 - 0.30), 0, 1);
-  const cardTranslateY = 10 - cardT * 380;  // +10 tucked → -370 fully emerged
+  // Card slide (0.50 → 0.82): starts only after flap is fully open
+  const cardT = clamp((progress - 0.50) / (0.82 - 0.50), 0, 1);
+  const cardTranslateY = 220 - cardT * 590;  // +220 tucked deep inside → -370 fully emerged
   const cardScale = 0.96 + cardT * 0.04;    // 0.96 → 1.00
   let cardZIndex = cardT > 0 ? 3 : 2;
 
@@ -33,8 +36,8 @@ export default function InnerCard({ scrollProgress }) {
   let zoomTranslateY = 0;
   let showPortal = false;
 
-  if (scrollProgress > 0.82) {
-    const zoomT = clamp((scrollProgress - 0.82) / (1.00 - 0.82), 0, 1);
+  if (progress > 0.82) {
+    const zoomT = clamp((progress - 0.82) / (1.00 - 0.82), 0, 1);
     zoomScale = 1 + zoomT * 0.22;
     zoomTranslateY = zoomT * 90;
     showPortal = zoomT > 0.18;
@@ -48,12 +51,18 @@ export default function InnerCard({ scrollProgress }) {
     setTimeout(() => { setIsLoading(false); setFormSubmitted(true); }, 1200);
   };
 
+  // Dynamically clip the bottom of the card so it never sticks out below the bottom of the envelope
+  const totalTranslateY = cardTranslateY + zoomTranslateY;
+  const clipBottomY = 470 - 15 - totalTranslateY;
+  const clipPathString = `polygon(0 0, 100% 0, 100% ${clipBottomY}px, 0 ${clipBottomY}px)`;
+
   return (
     <div
-      className={`inner-card-container ${scrollProgress > 0.82 ? 'active-portal' : ''}`}
+      className={`inner-card-container ${progress > 0.82 ? 'active-portal' : ''}`}
       style={{
-        transform: `translateY(${cardTranslateY + zoomTranslateY}px) scale(${cardScale * zoomScale})`,
+        transform: `translateY(${totalTranslateY}px) scale(${cardScale * zoomScale})`,
         zIndex: cardZIndex,
+        clipPath: clipPathString,
         /* NO transform transition — scroll scrubbed */
       }}
     >
@@ -129,9 +138,9 @@ export default function InnerCard({ scrollProgress }) {
               </p>
               <div className="privilege-cards">
                 {[
-                  { Icon: Compass,    title: 'Catalogues',      desc: 'Immediate pricing & private collection access' },
-                  { Icon: Award,      title: 'Priority Booking', desc: 'Exclusive preview slots during London Design Festival' },
-                  { Icon: ShieldCheck,title: 'Trade VIP',        desc: 'Direct priority line with custom showroom concierge' },
+                  { Icon: Compass, title: 'Catalogues', desc: 'Immediate pricing & private collection access' },
+                  { Icon: Award, title: 'Priority Booking', desc: 'Exclusive preview slots during London Design Festival' },
+                  { Icon: ShieldCheck, title: 'Trade VIP', desc: 'Direct priority line with custom showroom concierge' },
                 ].map(({ Icon, title, desc }) => (
                   <div key={title} className="privilege-item animate-item">
                     <Icon size={18} className="privilege-icon" />
