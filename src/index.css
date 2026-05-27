@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Outfit:wght@200;300;400;500;600;700&display=swap');
 
+@import "tailwindcss";
+
 :root {
   /* Color Palette - Warm light paper neutrals transitioning to sleek dark gold */
   --bg-light: #eae3d5;
