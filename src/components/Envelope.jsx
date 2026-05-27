@@ -57,13 +57,13 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
       className="envelope-container"
       style={{
         transform: `translateY(${camY}px) scale(${camScale})`,
-        '--envelope-opacity': camOpacity,
+        opacity: camOpacity,
       }}
     >
       <div className="envelope-wrapper">
 
         {/* Warm golden internal glow */}
-        <div className="envelope-internal-glow" style={{ opacity: glowOpacity * camOpacity }} />
+        <div className="envelope-internal-glow" style={{ opacity: glowOpacity }} />
 
         {/* Envelope back plate */}
         <div className="envelope-backboard">
@@ -87,15 +87,14 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           <div className="top-flap-inner">
             <div className="inner-flap-lining" />
           </div>
+
+          <WaxSeal scrollProgress={scrollProgress} onClick={onSealClick} />
         </div>
 
         {/* Side & bottom flaps */}
         <div className="envelope-flap left-flap" />
         <div className="envelope-flap right-flap" />
         <div className="envelope-flap bottom-flap" />
-
-        {/* Wax seal — sits on the fold seam above ALL flaps */}
-        <WaxSeal scrollProgress={scrollProgress} onClick={onSealClick} />
 
       </div>
 
@@ -142,7 +141,6 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           z-index: 1;
           overflow: hidden;
           box-shadow: inset 0 0 50px rgba(0,0,0,0.12);
-          opacity: var(--envelope-opacity, 1);
         }
 
         .inner-shadow-overlay {
@@ -160,7 +158,6 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           height: 50%;
           transform-origin: top center;
           transform-style: preserve-3d;
-          opacity: var(--envelope-opacity, 1);
           /* NO transition — scroll scrubbed */
         }
 
@@ -214,7 +211,6 @@ export default function Envelope({ scrollProgress, onSealClick, children }) {
           inset: 0;
           pointer-events: none;
           z-index: 4;
-          opacity: var(--envelope-opacity, 1);
         }
 
         .left-flap {

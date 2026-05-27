@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Check, Award, Compass, ShieldCheck } from 'lucide-react';
 
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
@@ -14,20 +14,6 @@ export default function InnerCard({ scrollProgress }) {
   const [region, setRegion] = useState('LONDON');
   const [isLoading, setIsLoading] = useState(false);
 
-  const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e) => {
-    if (scrollProgress <= 0.82) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 to 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5; // -0.5 to 0.5
-    setMouseTilt({ x: x * 10, y: -y * 10 }); // Max 10 degrees tilt
-  };
-
-  const handleMouseLeave = () => {
-    setMouseTilt({ x: 0, y: 0 });
-  };
-
   /**
    * CARD ANIMATION STAGES:
    *
@@ -42,30 +28,17 @@ export default function InnerCard({ scrollProgress }) {
   const cardScale = 0.96 + cardT * 0.04;    // 0.96 → 1.00
   let cardZIndex = cardT > 0 ? 3 : 2;
 
-  // 3D Scroll Tilt (Only applied during zoom-in stage 0.82 → 1.00 to avoid envelope clipping)
-  let cardRotateX = 0;
-  let cardRotateY = 0;
-  let cardRotateZ = 0;
-
   // Card zoom-in (0.82 → 1.00)
   let zoomScale = 1;
   let zoomTranslateY = 0;
-  let cardTranslateZ = 0;
   let showPortal = false;
 
   if (scrollProgress > 0.82) {
     const zoomT = clamp((scrollProgress - 0.82) / (1.00 - 0.82), 0, 1);
     zoomScale = 1 + zoomT * 0.22;
     zoomTranslateY = zoomT * 90;
-    // Translate forward in Z space to be physically in front of all envelope flaps
-    cardTranslateZ = zoomT * 60;
     showPortal = zoomT > 0.18;
     cardZIndex = 20;
-
-    // Sweeping 3D entry rotation that settles flat
-    cardRotateX = (1 - zoomT) * -12;
-    cardRotateY = (1 - zoomT) * 15;
-    cardRotateZ = (1 - zoomT) * -4;
   }
 
   const handleSubmit = (e) => {
@@ -79,50 +52,34 @@ export default function InnerCard({ scrollProgress }) {
     <div
       className={`inner-card-container ${scrollProgress > 0.82 ? 'active-portal' : ''}`}
       style={{
-        transform: `translateY(${cardTranslateY + zoomTranslateY}px) scale(${cardScale * zoomScale}) translateZ(${cardTranslateZ}px) rotateX(${cardRotateX}deg) rotateY(${cardRotateY}deg) rotateZ(${cardRotateZ}deg)`,
+        transform: `translateY(${cardTranslateY + zoomTranslateY}px) scale(${cardScale * zoomScale})`,
         zIndex: cardZIndex,
         /* NO transform transition — scroll scrubbed */
       }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
     >
-      <div className="card-interactive-wrapper" style={{
-        transform: `rotateX(${mouseTilt.y}deg) rotateY(${mouseTilt.x}deg)`,
-      }}>
-        <div className="card-texture" />
-        <div className="card-face">
+      <div className="card-texture" />
+      <div className="card-face">
 
-        {/* ── Invitation view: full-card LB seal design ── */}
+        {/* ── Invitation view (visible while card is inside or just emerging) ── */}
         <div className={`invitation-view ${showPortal ? 'fade-out' : ''}`}>
-
-          {/* Top label */}
-          <div className="inv-top">
-            <span className="luxury-text inv-label">Lee Broom</span>
-            <div className="inv-rule" />
+          <div className="invitation-header">
+            <span className="luxury-text subtitle">Invitation</span>
+            <div className="gold-crest">LB</div>
           </div>
-
-          {/* Big centre seal */}
-          <div className="lb-seal-large">
-            <div className="lb-seal-outer-ring" />
-            <div className="lb-seal-mid-ring" />
-            <div className="lb-seal-inner">
-              <span className="lb-seal-mono">LB</span>
-            </div>
-            <div className="lb-seal-glow" />
+          <div className="invitation-body">
+            <h2 className="luxury-heading invitation-title">Lee Broom Members</h2>
+            <div className="divider-line" />
+            <p className="invitation-desc luxury-text">
+              Access to Trade Portal &amp; Exclusive Membership
+            </p>
           </div>
-
-          {/* Bottom text */}
-          <div className="inv-bottom">
-            <div className="inv-rule" />
-            <h2 className="luxury-heading inv-title">Members</h2>
-            <span className="scroll-indicator-text luxury-text">Scroll to reveal</span>
+          <div className="invitation-footer">
+            <span className="scroll-indicator-text luxury-text">Scroll to open portal</span>
           </div>
-
         </div>
 
         {/* ── Full interactive portal (reveals after card zooms in) ── */}
         <div className={`portal-view ${showPortal ? 'fade-in' : ''}`}>
-          <div className="shimmer-sweep" />
           {!formSubmitted ? (
             <form onSubmit={handleSubmit} className="portal-form">
               <div className="portal-header animate-item">
@@ -193,44 +150,8 @@ export default function InnerCard({ scrollProgress }) {
         </div>
 
       </div>
-    </div>
 
       <style>{`
-        .card-interactive-wrapper {
-          position: absolute;
-          inset: 0;
-          transform-style: preserve-3d;
-          transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .shimmer-sweep {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            105deg,
-            transparent 30%,
-            rgba(255, 255, 255, 0.35) 40%,
-            rgba(255, 255, 255, 0.6) 50%,
-            rgba(255, 255, 255, 0.35) 60%,
-            transparent 70%
-          );
-          transform: translateX(-100%) skewX(-15deg);
-          z-index: 5;
-          pointer-events: none;
-        }
-
-        .portal-view.fade-in .shimmer-sweep {
-          animation: sweep 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-          animation-delay: 0.3s;
-        }
-
-        @keyframes sweep {
-          0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
-          15% { opacity: 1; }
-          85% { opacity: 1; }
-          100% { transform: translateX(100%) skewX(-15deg); opacity: 0; }
-        }
-
         .inner-card-container {
           position: absolute;
           top: 15px;
@@ -264,14 +185,15 @@ export default function InnerCard({ scrollProgress }) {
         }
 
         .card-face {
-          position: absolute;
-          inset: 0;
+          position: relative;
+          width: 100%;
+          height: 100%;
+          padding: 40px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           z-index: 1;
-          overflow: hidden;
         }
 
         .divider-line {
@@ -290,120 +212,48 @@ export default function InnerCard({ scrollProgress }) {
           height: 100%;
           width: 100%;
           text-align: center;
-          padding: 44px 40px;
-          transition: opacity 0.55s ease, transform 0.55s ease;
+          transition: opacity 0.4s ease, transform 0.4s ease;
           opacity: 1;
-          background: linear-gradient(160deg, #fdfaf6 0%, #f5f0e8 100%);
         }
 
         .invitation-view.fade-out {
           opacity: 0;
           pointer-events: none;
-          transform: scale(0.94) translateY(-10px);
+          transform: scale(0.96) translateY(-8px);
         }
 
-        /* top / bottom label rows */
-        .inv-top, .inv-bottom {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
+        .invitation-header .subtitle {
+          font-size: 10px;
+          color: var(--gold-dark);
+          letter-spacing: 0.3em;
+          display: block;
+          margin-bottom: 10px;
         }
 
-        .inv-label {
-          font-size: 9px;
-          color: rgba(34,31,29,0.45);
-          letter-spacing: 0.42em;
-          text-transform: uppercase;
-        }
-
-        .inv-rule {
-          width: 40px;
-          height: 1px;
-          background: var(--gold-primary);
-          opacity: 0.6;
-        }
-
-        .inv-title {
-          font-size: 14px;
-          color: var(--text-dark);
-          letter-spacing: 0.42em;
-          text-transform: uppercase;
-          margin: 0;
-        }
-
-        /* ── Big LB Seal ── */
-        .lb-seal-large {
-          position: relative;
-          width: 160px;
-          height: 160px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          animation: sealPulse 3.5s ease-in-out infinite;
-        }
-
-        @keyframes sealPulse {
-          0%, 100% { transform: scale(1); }
-          50%  { transform: scale(1.035); }
-        }
-
-        .lb-seal-outer-ring {
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          border: 1px solid rgba(195,166,125,0.25);
-          animation: ringExpand 3.5s ease-in-out infinite;
-        }
-
-        @keyframes ringExpand {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50%  { transform: scale(1.12); opacity: 0; }
-        }
-
-        .lb-seal-mid-ring {
-          position: absolute;
-          inset: 10px;
-          border-radius: 50%;
-          border: 1px solid rgba(195,166,125,0.35);
-        }
-
-        .lb-seal-inner {
-          position: relative;
-          width: 120px;
-          height: 120px;
-          border-radius: 50%;
-          background: radial-gradient(circle at 36% 36%, #2a2826 0%, #171514 58%, #0d0c0b 100%);
-          box-shadow:
-            inset 2px 2px 5px rgba(255,255,255,0.13),
-            inset -3px -3px 7px rgba(0,0,0,0.75),
-            0 12px 36px rgba(0,0,0,0.38),
-            0 4px 12px rgba(0,0,0,0.22);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2;
-        }
-
-        .lb-seal-mono {
+        .gold-crest {
           font-family: var(--font-serif);
-          font-size: 42px;
+          font-size: 24px;
           font-weight: 500;
-          color: #12100f;
-          letter-spacing: -0.04em;
-          text-shadow: 1px 1px 2px rgba(255,255,255,0.07),
-                       -1px -1px 3px rgba(0,0,0,0.9);
-          user-select: none;
+          color: var(--gold-dark);
+          border: 1px solid var(--gold-primary);
+          width: 50px; height: 50px;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: 50%;
+          margin: 0 auto;
         }
 
-        .lb-seal-glow {
-          position: absolute;
-          inset: 18px;
-          border-radius: 50%;
-          background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.07) 0%, transparent 65%);
-          pointer-events: none;
-          z-index: 3;
+        .invitation-title {
+          font-size: 22px;
+          color: var(--text-dark);
+          letter-spacing: 0.22em;
+        }
+
+        .invitation-desc {
+          font-size: 9.5px;
+          color: rgba(34,31,29,0.6);
+          line-height: 1.9;
+          max-width: 280px;
+          margin: 0 auto;
         }
 
         .scroll-indicator-text {
@@ -425,26 +275,18 @@ export default function InnerCard({ scrollProgress }) {
           padding: 44px 50px;
           opacity: 0;
           pointer-events: none;
-          transform: scale(0.90) translateY(24px);
-          transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-                      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+          transform: scale(1.04) translateY(8px);
+          transition: opacity 0.5s ease, transform 0.5s ease;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          background: radial-gradient(circle at 50% 30%, #ffffff 0%, #faf8f5 100%);
+          background: radial-gradient(circle at 50% 50%, #ffffff 0%, #faf8f5 100%);
         }
 
         .portal-view.fade-in {
           opacity: 1;
           pointer-events: all;
           transform: scale(1) translateY(0);
-          animation: cardOpenReveal 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        @keyframes cardOpenReveal {
-          0%   { opacity: 0; transform: scale(0.88) translateY(28px); clip-path: inset(8% 8% 8% 8% round 4px); }
-          60%  { clip-path: inset(0% 0% 0% 0% round 4px); }
-          100% { opacity: 1; transform: scale(1) translateY(0);  clip-path: inset(0% 0% 0% 0% round 0px); }
         }
 
         .mini-crest {

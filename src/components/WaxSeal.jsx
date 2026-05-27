@@ -35,7 +35,7 @@ export default function WaxSeal({ scrollProgress, onClick }) {
         .wax-seal-container {
           position: absolute;
           /* Center of envelope = fold seam between all four flaps */
-          top: 50%;
+          top: 100%;
           left: 50%;
           width: 86px;
           height: 86px;
